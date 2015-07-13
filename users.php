@@ -29,6 +29,7 @@ $app = new Slim();
 
 $app->post('/login', 'userLogin');
 $app->post('/join', 'userJoin');
+$app->post('/twiliojoin', 'twilioJoin');
 
 $app->delete('/user', 'deleteUser');
 $app->put('/user', 'updateUser');
@@ -197,6 +198,130 @@ function userJoin() {
         $stmt->bindParam("state", $user->state);
         $stmt->bindParam("zip", $user->zip);
         $stmt->bindParam("profile", $user->profile);
+        $stmt->execute();
+        $newusrid = $db->lastInsertId();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Generate a session token
+    $length = 24;
+    $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
+    if(!($strong = true)){
+        echo '{"error":{"text":"Did not generate secure random session token"}}';
+        exit;
+    }
+
+    //Insert session token
+    $sql = "INSERT INTO sessions
+
+        (user_id, token)
+
+        VALUES
+
+        (:user_id, :token)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("user_id", $newusrid);
+        $stmt->bindParam("token", $randomstring);
+        $stmt->execute();
+        $session_token = $randomstring;
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    echo '{"result":{ "session_token":"'. $randomstring .'"}}';
+}
+
+function twilioJoin() {
+    $request = Slim::getInstance()->request();
+    $user = json_decode($request->getBody());
+
+    //Check if username exists
+    $sql = "SELECT
+
+        username, id
+
+        FROM users WHERE username=:username LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
+        //$stmt->bindParam("password", $user->password);
+        $stmt->execute();
+        $usercheck = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //If exists echo error and cancel
+    if(isset($usercheck->username)){
+
+        //Generate a session token
+        $length = 24;
+        $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
+        if(!($strong = true)){
+            echo '{"error":{"text":"Did not generate secure random session token"}}';
+            exit;
+        }
+
+        //Insert session token
+        $sql = "INSERT INTO sessions
+
+            (user_id, token)
+
+            VALUES
+
+            (:user_id, :token)";
+
+        try {
+            $db = getConnection();
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam("user_id", $usercheck->id);
+            $stmt->bindParam("token", $randomstring);
+            $stmt->execute();
+            $response->session_token = $randomstring;
+            $session_token = $randomstring;
+            $db = null;
+        } catch(PDOException $e) {
+            echo '{"error":{"text":'. $e->getMessage() .'}}';
+            exit;
+        }
+
+        //Echo session token
+        echo '{"result":{"session_token":"'. $session_token .'"}}';
+        exit;
+    }
+
+    //Generate a salt
+    $length = 24;
+    $salt = bin2hex(openssl_random_pseudo_bytes($length));
+
+    //Crypt salt and password
+    $passwordcrypt = crypt($user->password, $salt);
+
+    //Create user
+    $sql = "INSERT INTO users
+
+    (username)
+
+    VALUES
+
+    (:username)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
         $stmt->execute();
         $newusrid = $db->lastInsertId();
         $db = null;
