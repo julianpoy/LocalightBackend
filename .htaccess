@@ -1,0 +1,5 @@
+RewriteEngine On
+
+RewriteBase /
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(users.*)$ users.php [QSA,L]
