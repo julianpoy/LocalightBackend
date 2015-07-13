@@ -35,10 +35,6 @@ $app->delete('/user', 'deleteUser');
 $app->put('/user', 'updateUser');
 $app->get('/user/:id', 'getUser');
 
-$app->post('/users/string', 'stringSearch');
-//INCOMPLETE:
-//$app->post('/users/parameter', 'findByParameter');
-
 $app->run();
 
 function userLogin() {
