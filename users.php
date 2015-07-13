@@ -27,9 +27,9 @@ require 'ProtectedDocs/connection.php';
 
 $app = new Slim();
 
-$app->post('/login', 'userLogin');
-$app->post('/join', 'userJoin');
-$app->post('/twiliojoin', 'twilioJoin');
+$app->post('/user/login', 'userLogin');
+$app->post('/user/join', 'userJoin');
+$app->post('/user/twiliojoin', 'twilioJoin');
 
 $app->delete('/user', 'deleteUser');
 $app->put('/user', 'updateUser');
@@ -298,7 +298,7 @@ function twilioJoin() {
             //Echo session token
             header("content-type: text/xml");
             echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-            echo '<Response><Message>' . $randomstring .'</Message></Response>';
+            echo '<Response><Message>http://lbgift.com/giftcards/create/' . $randomstring .'</Message></Response>';
             exit;
         }
 
@@ -355,7 +355,7 @@ function twilioJoin() {
 
         header("content-type: text/xml");
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        echo '<Response><Message>' . $randomstring .'</Message></Response>';
+        echo '<Response><Message>http://lbgift.com/giftcards/create/' . $randomstring .'</Message></Response>';
     }
 }
 
