@@ -241,9 +241,10 @@ function userJoin() {
 
 function twilioJoin() {
     $request = Slim::getInstance()->request();
-    $user = json_decode($request->getBody());
+    $request = $request->getBody();
+    parse_str($request, $user);
 
-    if($user->Body == "Gift"){
+    if($user['Body'] == "Gift"){
         //Check if username exists
         $sql = "SELECT
 
@@ -254,7 +255,7 @@ function twilioJoin() {
         try {
             $db = getConnection();
             $stmt = $db->prepare($sql);
-            $stmt->bindParam("username", $user->username);
+            $stmt->bindParam("username", $user['username']);
             //$stmt->bindParam("password", $user->password);
             $stmt->execute();
             $usercheck = $stmt->fetchObject();
@@ -305,13 +306,6 @@ function twilioJoin() {
             exit;
         }
 
-        //Generate a salt
-        $length = 24;
-        $salt = bin2hex(openssl_random_pseudo_bytes($length));
-
-        //Crypt salt and password
-        $passwordcrypt = crypt($user->password, $salt);
-
         //Create user
         $sql = "INSERT INTO users
 
@@ -324,7 +318,7 @@ function twilioJoin() {
         try {
             $db = getConnection();
             $stmt = $db->prepare($sql);
-            $stmt->bindParam("username", $user->username);
+            $stmt->bindParam("username", $user['From']);
             $stmt->execute();
             $newusrid = $db->lastInsertId();
             $db = null;
