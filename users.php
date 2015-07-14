@@ -241,6 +241,9 @@ function twilioJoin() {
     parse_str($request, $user);
 
     if($user['Body'] == "Gift"){
+        //Remove +1 from username (phone number)
+        $username_trimmed = substr($user['From'], 2);
+
         //Check if username exists
         $sql = "SELECT
 
@@ -251,7 +254,7 @@ function twilioJoin() {
         try {
             $db = getConnection();
             $stmt = $db->prepare($sql);
-            $stmt->bindParam("username", $user['username']);
+            $stmt->bindParam("username", $username_trimmed);
             //$stmt->bindParam("password", $user->password);
             $stmt->execute();
             $usercheck = $stmt->fetchObject();
@@ -314,7 +317,7 @@ function twilioJoin() {
         try {
             $db = getConnection();
             $stmt = $db->prepare($sql);
-            $stmt->bindParam("username", $user['From']);
+            $stmt->bindParam("username", $username_trimmed);
             $stmt->execute();
             $newusrid = $db->lastInsertId();
             $db = null;
