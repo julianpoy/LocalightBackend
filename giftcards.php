@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 include 'Slim/Slim.php';
 
 require 'ProtectedDocs/connection.php';
+require_once('Stripe/init.php');
 
 $app = new Slim();
 
@@ -39,7 +40,21 @@ function createCard(){
     $request = Slim::getInstance()->request();
     $card = json_decode($request->getBody());
 
-    //CREATE A CHARGE HERE
+    //Set our stripe api key
+    \Stripe\Stripe::setApiKey("API KEY HERE");
+
+    // Create the charge on Stripe's servers - this will charge the user's card
+    try {
+    $charge = \Stripe\Charge::create(array(
+      "amount" => $card->amount, // amount in cents, again
+      "currency" => "usd",
+      "source" => $card->stripe_token,
+      "description" => "Created a Localight Gift Card")
+    );
+    } catch(\Stripe\Error\Card $e) {
+        //SPIT OUT AN ERROR FOR CARD NOT VALID
+        exit;
+    }
 
     //Check if recipient exists
     $sql = "SELECT
