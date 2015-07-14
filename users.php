@@ -264,65 +264,33 @@ function twilioJoin() {
             exit;
         }
 
-        //If exists echo error and cancel
+        //Hold the validated id
+        $user_id_validated;
+        //If user already exists, generate a session token
+        //If not, create the user and generate a session token
         if(isset($usercheck->username)){
+            $user_id_validated = $usercheck->id;
+        } else {
+            //Create user
+            $sql = "INSERT INTO users
 
-            //Generate a session token
-            $length = 24;
-            $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
-            if(!($strong = true)){
-                echo '{"error":{"text":"Did not generate secure random session token"}}';
-                exit;
-            }
+            (username)
 
-            //Insert session token
-            $sql = "INSERT INTO sessions
+            VALUES
 
-                (user_id, token)
-
-                VALUES
-
-                (:user_id, :token)";
+            (:username)";
 
             try {
                 $db = getConnection();
                 $stmt = $db->prepare($sql);
-                $stmt->bindParam("user_id", $usercheck->id);
-                $stmt->bindParam("token", $randomstring);
+                $stmt->bindParam("username", $username_trimmed);
                 $stmt->execute();
-                $session_token = $randomstring;
+                $user_id_validated = $db->lastInsertId();
                 $db = null;
             } catch(PDOException $e) {
                 echo '{"error":{"text":'. $e->getMessage() .'}}';
                 exit;
             }
-
-            //Echo session token
-            header("content-type: text/xml");
-            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-            echo '<Response><Message>http://lbgift.com/giftcards/create/' . $randomstring .'</Message></Response>';
-            exit;
-        }
-
-        //Create user
-        $sql = "INSERT INTO users
-
-        (username)
-
-        VALUES
-
-        (:username)";
-
-        try {
-            $db = getConnection();
-            $stmt = $db->prepare($sql);
-            $stmt->bindParam("username", $username_trimmed);
-            $stmt->execute();
-            $newusrid = $db->lastInsertId();
-            $db = null;
-        } catch(PDOException $e) {
-            echo '{"error":{"text":'. $e->getMessage() .'}}';
-            exit;
         }
 
         //Generate a session token
@@ -345,7 +313,7 @@ function twilioJoin() {
         try {
             $db = getConnection();
             $stmt = $db->prepare($sql);
-            $stmt->bindParam("user_id", $newusrid);
+            $stmt->bindParam("user_id", $user_id_validated);
             $stmt->bindParam("token", $randomstring);
             $stmt->execute();
             $session_token = $randomstring;
