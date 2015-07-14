@@ -36,7 +36,91 @@ $app->get('/giftcards', 'getCards');
 $app->run();
 
 function createCard(){
+    $request = Slim::getInstance()->request();
+    $card = json_decode($request->getBody());
 
+    //CREATE A CHARGE HERE
+
+    //Check if recipient exists
+    $sql = "SELECT
+
+        username, id
+
+        FROM users WHERE username=:username LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->to_phone);
+        $stmt->execute();
+        $usercheck = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Hold the id of our recipient
+    $recipient_id;
+
+    //If user above exists, thats our user! Else we create them!
+    if(isset($usercheck->username)){
+        $recipient_id = $usercheck->id;
+    } else {
+        //Create user
+        $sql = "INSERT INTO users
+
+        (username, name)
+
+        VALUES
+
+        (:username, :name)";
+
+        try {
+            $db = getConnection();
+            $stmt = $db->prepare($sql);
+            $stmt->bindParam("username", $user->to_phone);
+            $stmt->bindParam("name", $user->to_name);
+            $stmt->execute();
+            $recipient_id = $db->lastInsertId();
+            $db = null;
+        } catch(PDOException $e) {
+            echo '{"error":{"text":'. $e->getMessage() .'}}';
+            exit;
+        }
+    }
+
+    //Generate a session token for the recipient
+    $length = 24;
+    $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
+    if(!($strong = true)){
+        echo '{"error":{"text":"Did not generate secure random session token"}}';
+        exit;
+    }
+
+    //Insert session token
+    $sql = "INSERT INTO sessions
+
+        (user_id, token)
+
+        VALUES
+
+        (:user_id, :token)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("user_id", $recipient_id);
+        $stmt->bindParam("token", $randomstring);
+        $stmt->execute();
+        $session_token = $randomstring;
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //TEXT THE NEW USER HERE
 }
 
 function updateCard(){
@@ -48,7 +132,7 @@ function getCard(){
 }
 
 function getCards(){
-    
+
 }
 
 function utf8ize($mixed) {
