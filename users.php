@@ -290,7 +290,6 @@ function twilioJoin() {
                 $stmt->bindParam("user_id", $usercheck->id);
                 $stmt->bindParam("token", $randomstring);
                 $stmt->execute();
-                $response->session_token = $randomstring;
                 $session_token = $randomstring;
                 $db = null;
             } catch(PDOException $e) {
