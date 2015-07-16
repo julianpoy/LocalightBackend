@@ -325,7 +325,7 @@ function twilioJoin() {
 
         header("content-type: text/xml");
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        echo '<Response><Message>http://lbgift.com/giftcards/create/' . $randomstring .'</Message></Response>';
+        echo '<Response><Message>http://lbgift.com/#!/giftcards/create/' . $randomstring .'</Message></Response>';
     }
 }
 
